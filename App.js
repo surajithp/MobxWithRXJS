@@ -24,16 +24,18 @@ const MainviewComponent = glamorous.view({
 });
 @observer
 export default class App extends Component {
-  @observable random_value = null;
+  @observable maximum_value = null;
   @observable current_value = null;
+  @observable button_title = "Start";
+  @observable toggle_button = true;
+  dataObserver = {};
+  subscription = null;
 
-  @action
-  onPressLoadMore = () => {
-    console.log("Button Clicked");
-    // Rx.Observable.interval(1000)
-    //   .take(20)
-    //   .subscribe(val => (this.random_value = val));
-    Rx.Observable.interval(1000)
+  componentDidMount = () => {
+    this.createNewobserver();
+  };
+  createNewobserver = () => {
+    this.dataObserver = Rx.Observable.interval(1000)
       .concatMap(val =>
         Rx.Observable.of(Math.floor(Math.random() * 1000)).delay(
           Math.floor(Math.random() * 4) * 1000
@@ -42,19 +44,43 @@ export default class App extends Component {
       .scan((acc, curr) => {
         this.current_value = curr;
         return acc > curr ? acc : curr;
-      }, 0)
-      .subscribe(val => (this.random_value = val));
+      }, 0);
+  };
+  createNewSubscription() {
+    this.unsubscribeIfNecessary();
+    this.subscription = this.dataObserver.subscribe(
+      val => (this.maximum_value = val)
+    );
+  }
+
+  unsubscribeIfNecessary() {
+    if (this.subscription && !this.subscription.closed) {
+      this.subscription.unsubscribe();
+    }
+  }
+
+  @action
+  onPressLoadMore = () => {
+    console.log("Button Clicked");
+    this.button_title = this.toggle_button ? "Stop" : "Start";
+    if (!this.toggle_button) {
+      //stop
+      this.unsubscribeIfNecessary();
+    } else {
+      //start
+      this.createNewSubscription();
+    }
+    this.toggle_button = !this.toggle_button;
   };
 
   render() {
     return (
       <MainviewComponent>
-        <Text>Click below button to display random numbers</Text>
         <Buttoncomponent>
-          <Button onPress={this.onPressLoadMore} title="Start" />
+          <Button onPress={this.onPressLoadMore} title={this.button_title} />
         </Buttoncomponent>
         <Text>Current Value:{this.current_value}</Text>
-        <Text>Max Value:{this.random_value}</Text>
+        <Text>Max Value:{this.maximum_value}</Text>
       </MainviewComponent>
     );
   }
