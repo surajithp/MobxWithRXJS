@@ -54,13 +54,15 @@ export default class App extends Component {
   }
 
   unsubscribeIfNecessary() {
+    console.log(this.subscription);
+    console.log(this.subscription.closed);
     if (this.subscription && !this.subscription.closed) {
       this.subscription.unsubscribe();
     }
   }
 
-  @action
-  onPressLoadMore = () => {
+  @action //Where multiple observables states can modify
+  onPressStart= () => {
     console.log("Button Clicked");
     this.button_title = this.toggle_button ? "Stop" : "Start";
     if (!this.toggle_button) {
@@ -77,7 +79,7 @@ export default class App extends Component {
     return (
       <MainviewComponent>
         <Buttoncomponent>
-          <Button onPress={this.onPressLoadMore} title={this.button_title} />
+          <Button onPress={this.onPressStart} title={this.button_title} />
         </Buttoncomponent>
         <Text>Current Value:{this.current_value}</Text>
         <Text>Max Value:{this.maximum_value}</Text>
