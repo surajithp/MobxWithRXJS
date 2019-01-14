@@ -24,36 +24,28 @@ const MainviewComponent = glamorous.view({
 });
 @observer
 export default class App extends Component {
-  @observable maximumValue = null;
   @observable buttonTitle = "Start";
   @observable toggleButton = true;
-  @observable currentvalues = [];
+  @observable currentValue = null;
+  @observable maxValues = [0, 0, 0, 0, 0];
   dataObserver = {};
   subscription = null;
 
   componentDidMount = () => {
-    console.log("did mount");
     this.createNewobserver();
   };
 
   createNewobserver = () => {
-    this.dataObserver = Rx.Observable.from([56, 84, 321, 421, 621])
-      .concat(
-        Rx.Observable.interval(1000).concatMap(val =>
-          Rx.Observable.of(Math.floor(Math.random() * 1000)).delay(
-            Math.floor(Math.random() * 4) * 1000
-          )
-        )
+    this.dataObserver = Rx.Observable.interval(1000).concatMap(val =>
+      Rx.Observable.of(Math.floor(Math.random() * 1000)).delay(
+        Math.floor(Math.random() * 4) * 1000
       )
-      .scan((acc, curr) => {
-        this.currentvalues.push(curr);
-        return acc > curr ? acc : curr;
-      }, 0);
+    );
   };
   createNewSubscription() {
     this.unsubscribeIfNecessary();
-    this.subscription = this.dataObserver.subscribe(
-      val => (this.maximumValue = val)
+    this.subscription = this.dataObserver.subscribe(val =>
+      this.sortingValues(val)
     );
   }
 
@@ -62,6 +54,12 @@ export default class App extends Component {
       this.subscription.unsubscribe();
     }
   }
+  @action
+  sortingValues = value => {
+    console.log("Called Sorting Values");
+    this.currentValue = value;
+    this.maxValues.push(value);
+  };
 
   @action //Where multiple observables values can be modify
   onPressStart = () => {
@@ -80,18 +78,22 @@ export default class App extends Component {
   };
 
   render() {
+    console.log("rendered");
     return (
       <MainviewComponent>
         <Buttoncomponent>
           <Button onPress={this.onPressStart} title={this.buttonTitle} />
         </Buttoncomponent>
+        <Text>Current Value:{this.currentValue}</Text>
         <Text>
-          Current Values:
-          {this.currentvalues.map((item, i) => (
-            <Text key={i}>{item},</Text>
-          ))}
+          Maximum Values:
+          {this.maxValues
+            .sort((a, b) => b - a)
+            .filter((item, i) => i < 5)
+            .map((item, i) => (
+              <Text key={i}>{item},</Text>
+            ))}
         </Text>
-        <Text>Max Value:{this.maximumValue}</Text>
       </MainviewComponent>
     );
   }
